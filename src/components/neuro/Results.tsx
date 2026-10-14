@@ -103,7 +103,7 @@ export function ContributionChart({ risk }: { risk: RiskResult }) {
   );
 }
 
-export function Results({ risk, onBack, onReport, onRetest }: { risk: RiskResult; onBack: () => void; onReport: () => void; onRetest: (m: "motor" | "voice" | "ocular") => void }) {
+export function Results({ risk, onBack, onReport, onRetest, onDownloadPdf }: { risk: RiskResult; onBack: () => void; onReport: () => void; onRetest: (m: "motor" | "voice" | "ocular") => void; onDownloadPdf?: () => void }) {
   const fmt = (v: number | null) => (v == null ? "—" : v.toFixed(0));
   return (
     <div>
@@ -157,7 +157,10 @@ export function Results({ risk, onBack, onReport, onRetest }: { risk: RiskResult
           <Button variant="outline" onClick={() => onRetest("voice")}>Redo voice test</Button>
           <Button variant="outline" onClick={() => onRetest("ocular")}>Redo eye test</Button>
         </div>
-        <Button onClick={onReport}>Generate patient report</Button>
+        <div className="flex flex-wrap gap-2">
+          {onDownloadPdf && <Button variant="outline" onClick={onDownloadPdf}>Download report as PDF</Button>}
+          <Button onClick={onReport}>Generate patient report</Button>
+        </div>
       </div>
     </div>
   );
