@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import type { MotorMetrics } from "@/lib/neuro/motor";
 import type { VoiceMetrics } from "@/lib/neuro/voice";
+import type { OcularMetrics } from "@/lib/neuro/ocular";
 
 const axis = { fontSize: 10, fill: "var(--color-muted-foreground)" };
 
@@ -98,6 +99,50 @@ export function VoiceCharts({ v }: { v: VoiceMetrics }) {
         </LineChart>
       </ResponsiveContainer>
     </Panel>
+  );
+}
+
+function GazeTrace({ data }: { data: { t: number; target: number; gaze: number | null }[] }) {
+  if (data.length < 2) return <Empty />;
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={data} margin={{ top: 4, right: 6, bottom: 0, left: -22 }}>
+        <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" />
+        <XAxis dataKey="t" type="number" tick={axis} domain={[0, "dataMax"]} tickFormatter={(v) => `${Math.round(v)}s`} />
+        <YAxis tick={axis} domain={[-16, 16]} ticks={[-15, -10, -5, 0, 5, 10, 15]} tickFormatter={(v) => `${v}°`} />
+        <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)}°`} labelFormatter={(l) => `${l} s`} />
+        <Line dataKey="target" name="Target" stroke="var(--color-signal-2)" dot={false} strokeWidth={1.4} strokeDasharray="4 3" isAnimationActive={false} type="stepAfter" />
+        <Line dataKey="gaze" name="Gaze" stroke="var(--color-signal)" dot={false} strokeWidth={1.6} isAnimationActive={false} connectNulls={false} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function OcularCharts({ o }: { o: OcularMetrics }) {
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      <Panel title="Horizontal saccades" sub={`dashed = target · median ${o.saccadeLatencyMs.toFixed(0)} ms`}>
+        <GazeTrace data={o.saccadeSeries} />
+      </Panel>
+      <Panel title="Smooth pursuit" sub={`gain ${o.pursuitGain.toFixed(2)}`}>
+        <GazeTrace data={o.pursuitSeries} />
+      </Panel>
+      <Panel title="Central fixation" sub={`SD ${o.fixationSdDeg.toFixed(2)}°`}>
+        {o.fixationSeries.length > 1 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={o.fixationSeries} margin={{ top: 4, right: 6, bottom: 0, left: -22 }}>
+              <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" />
+              <XAxis dataKey="t" type="number" tick={axis} domain={[0, "dataMax"]} tickFormatter={(v) => `${Math.round(v)}s`} />
+              <YAxis tick={axis} domain={[-3, 3]} ticks={[-3, -1.5, 0, 1.5, 3]} tickFormatter={(v) => `${v}°`} allowDataOverflow />
+              <ReferenceArea y1={-0.4} y2={0.4} fill="var(--color-risk-low)" fillOpacity={0.12} />
+              <Line dataKey="gaze" stroke="var(--color-signal)" dot={false} strokeWidth={1.4} isAnimationActive={false} connectNulls={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <Empty />
+        )}
+      </Panel>
+    </div>
   );
 }
 

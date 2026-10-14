@@ -11,7 +11,7 @@ export function Dashboard({ onStart, onOpen }: { onStart: () => void; onOpen: (i
       <section className="grid gap-6 lg:grid-cols-5">
         <div className="rounded-xl bg-ink p-8 text-ink-foreground lg:col-span-3">
           <p className="font-mono text-xs uppercase tracking-widest opacity-60">Clinical assessment workspace</p>
-          <h1 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">Non-invasive motor and vocal screening in under five minutes.</h1>
+          <h1 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">Non-invasive motor, vocal and eye-movement screening in about five minutes.</h1>
           <p className="mt-4 max-w-xl text-sm opacity-80">
             Webcam hand tracking quantifies rest tremor and finger-tapping bradykinesia. A sustained vowel yields jitter, shimmer and HNR. Both are combined into one transparent screening score.
           </p>
@@ -59,7 +59,7 @@ export function Dashboard({ onStart, onOpen }: { onStart: () => void; onOpen: (i
               </thead>
               <tbody>
                 {history.map((s) => {
-                  const r = computeRisk(s.motor, s.voice);
+                  const r = computeRisk(s.motor, s.voice, s.ocular ?? null);
                   return (
                     <tr key={s.id} className="border-t">
                       <td className="px-4 py-2">
@@ -67,7 +67,7 @@ export function Dashboard({ onStart, onOpen }: { onStart: () => void; onOpen: (i
                         <p className="text-xs text-muted-foreground">{s.patient.patientId || "—"}</p>
                       </td>
                       <td className="px-4 py-2 text-muted-foreground">{new Date(s.createdAt).toLocaleDateString()}</td>
-                      <td className="px-4 py-2 text-xs">{[s.motor && "Motor", s.voice && "Voice"].filter(Boolean).join(" · ") || "—"}</td>
+                      <td className="px-4 py-2 text-xs">{[s.motor && "Motor", s.voice && "Voice", s.ocular && "Ocular"].filter(Boolean).join(" · ") || "—"}</td>
                       <td className="px-4 py-2">
                         <span className="mr-2 font-mono">{r.score.toFixed(0)}</span>
                         <RiskBadge level={r.level} />
