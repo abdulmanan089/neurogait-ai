@@ -20,6 +20,8 @@ import {
 } from "@/lib/neuro/ocular";
 import { cn } from "@/lib/utils";
 import { cssVar, Metric, SectionTitle, SourceTag } from "./common";
+import { GateBanner, LiveChecks, useBrightness } from "./QualityPanel";
+import { lightingCheck, ocularGate } from "@/lib/neuro/quality";
 import { OcularCharts } from "./charts";
 
 type StepId = "prepFix" | "fixation" | "prepSac" | "saccade" | "prepPur" | "pursuit";
@@ -350,6 +352,13 @@ export function OcularTest({
   const phaseStart = SCHEDULE.slice(0, phaseIdx).reduce((s, p) => s + p.dur, 0);
   const remaining = Math.max(0, Math.ceil(phaseStart + phase.dur - elapsed));
   const showFeed = status === "live" || status === "running" || status === "loading";
+  // Quality control: lighting + both irises visible (no occlusion, glare or closed eyes).
+  const checks = [
+    lightingCheck(luma),
+    { id: "eyes", label: "Eyes visible", ok: eyesSeen, hint: eyesSeen ? "Both irises tracked." : "Face the camera; remove glare-causing glasses; keep eyes open." },
+  ];
+  const checksOk = checks.every((c) => c.ok);
+  const gate = ocularGate(result);
   const latTone = result ? (result.saccadeLatencyMs > 300 ? "bad" : result.saccadeLatencyMs > 250 ? "warn" : "good") : "default";
 
   return (
@@ -438,7 +447,7 @@ export function OcularTest({
             )}
             {status === "live" && (
               <>
-                <Button onClick={beginRun} disabled={mode === "camera" && !eyesSeen}><Play className="mr-2 h-4 w-4" /> Start {TOTAL}s test</Button>
+                <Button onClick={beginRun} disabled={mode === "camera" && !checksOk}><Play className="mr-2 h-4 w-4" /> Start {TOTAL}s test</Button>
                 {mode === "camera" && <Button variant="outline" onClick={startSimulation}><Sparkles className="mr-2 h-4 w-4" /> Use simulation instead</Button>}
                 <Button variant="ghost" onClick={reset}><CameraOff className="mr-2 h-4 w-4" /> Stop</Button>
               </>
@@ -446,6 +455,8 @@ export function OcularTest({
             {status === "running" && <Button variant="outline" onClick={reset}>Cancel test</Button>}
             {status === "done" && <Button variant="outline" onClick={reset}><RotateCcw className="mr-2 h-4 w-4" /> Repeat test</Button>}
           </div>
+          {mode === "camera" && (status === "live" || status === "running") && <div className="mt-3"><LiveChecks checks={checks} /></div>}
+          {status === "done" && <div className="mt-3"><GateBanner gate={gate} /></div>}
           {error && (
             <div role="alert" className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
               <p>{error}</p>
@@ -510,7 +521,7 @@ export function OcularTest({
         <Button variant="ghost" onClick={onBack}>Back</Button>
         <div className="flex gap-2">
           {!result && <Button variant="outline" onClick={() => { stopAll(); onComplete(null); }}>Skip this module</Button>}
-          <Button disabled={!result || status === "running"} onClick={() => onComplete(result)}>Continue to results</Button>
+          <Button disabled={!result || status === "running" || !gate.pass} onClick={() => onComplete(result)}>Continue to results</Button>
         </div>
       </div>
     </div>

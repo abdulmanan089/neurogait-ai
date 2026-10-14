@@ -16,6 +16,8 @@ import {
 } from "@/lib/neuro/motor";
 import { cn } from "@/lib/utils";
 import { cssVar, Metric, SectionTitle, SourceTag } from "./common";
+import { GateBanner, LiveChecks, useBrightness } from "./QualityPanel";
+import { insideFrame, lightingCheck, motorGate } from "@/lib/neuro/quality";
 import { MotorCharts } from "./charts";
 
 const SCHEDULE: { id: "prepRest" | "rest" | "prepTap" | "tap"; dur: number; title: string; cue: string }[] = [
@@ -96,6 +98,8 @@ export function MotorTest({
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [handSeen, setHandSeen] = useState(false);
+  const [handInFrame, setHandInFrame] = useState(false);
+  const luma = useBrightness(videoRef, mode === "camera" && (status === "live" || status === "running"));
   const [live, setLive] = useState<{ t: number; v: number }[]>([]);
   const [result, setResult] = useState<MotorMetrics | null>(existing);
 
@@ -226,7 +230,7 @@ export function MotorTest({
 
     if (now - lastUiRef.current > 100) {
       lastUiRef.current = now;
-      if (fresh) setHandSeen(!!lm);
+      if (fresh) { setHandSeen(!!lm); setHandInFrame(insideFrame(lm)); }
       if (running) {
         setElapsed(el);
         setPhaseIdx(idx);
@@ -321,6 +325,14 @@ export function MotorTest({
   const remaining = Math.max(0, Math.ceil(phaseStart + phase.dur - elapsed));
   const isTap = status === "running" && phase.id === "tap";
   const showFeed = status === "live" || status === "running" || status === "loading";
+  // Quality control: lighting + hand fully visible must pass before a camera run can start.
+  const checks = [
+    lightingCheck(luma),
+    { id: "hand", label: "Hand detected", ok: handSeen, hint: handSeen ? "Hand landmarks found." : "Show your open hand to the camera." },
+    { id: "frame", label: "Fully in frame", ok: handInFrame, hint: handInFrame ? "No fingers cut off or occluded." : "Move back so the whole hand, including fingertips, is visible." },
+  ];
+  const checksOk = checks.every((c) => c.ok);
+  const gate = motorGate(result);
 
   return (
     <div>
@@ -393,10 +405,10 @@ export function MotorTest({
             )}
             {status === "live" && (
               <>
-                <Button onClick={beginRun} disabled={mode === "camera" && !handSeen}>
+                <Button onClick={beginRun} disabled={mode === "camera" && !checksOk}>
                   <Play className="mr-2 h-4 w-4" /> Start 24-second test
                 </Button>
-                {mode === "camera" && !handSeen && <span className="text-xs text-muted-foreground">Show your hand to the camera to begin.</span>}
+                {mode === "camera" && !checksOk && <span className="text-xs text-muted-foreground">Fix the quality checks below to begin.</span>}
                 {mode === "camera" && (
                   <Button variant="outline" onClick={startSimulation}>
                     <Sparkles className="mr-2 h-4 w-4" /> Use simulation instead
@@ -418,6 +430,8 @@ export function MotorTest({
               </Button>
             )}
           </div>
+          {mode === "camera" && (status === "live" || status === "running") && <div className="mt-3"><LiveChecks checks={checks} /></div>}
+          {status === "done" && <div className="mt-3"><GateBanner gate={gate} /></div>}
           {error && (
             <div role="alert" className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
               <p>{error}</p>
@@ -484,7 +498,7 @@ export function MotorTest({
         <Button variant="ghost" onClick={onBack}>Back</Button>
         <div className="flex gap-2">
           {!result && <Button variant="outline" onClick={() => { stopAll(); onComplete(null); }}>Skip this module</Button>}
-          <Button disabled={!result || status === "running"} onClick={() => onComplete(result)}>Continue to voice test</Button>
+          <Button disabled={!result || status === "running" || !gate.pass} onClick={() => onComplete(result)}>Continue to voice test</Button>
         </div>
       </div>
     </div>
