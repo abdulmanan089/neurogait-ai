@@ -135,6 +135,17 @@ export function analyzeVoice(buf: Float32Array, sr: number, source: VoiceMetrics
     const fi = Math.min(track.length - 1, Math.max(0, Math.floor(idx / hopFull)));
     return track[fi];
   };
+  // Light low-pass (~1.5 kHz box filter) so additive noise doesn't jitter peak timing.
+  const wlp = Math.max(1, Math.round(sr / 3000));
+  const xs = new Float32Array(x.length);
+  {
+    let acc = 0;
+    for (let i = 0; i < x.length; i++) {
+      acc += x[i];
+      if (i >= wlp) acc -= x[i - wlp];
+      xs[Math.max(0, i - Math.floor(wlp / 2))] = acc / Math.min(i + 1, wlp);
+    }
+  }
   const periods: number[][] = [];
   const amps: number[][] = [];
   let f = 0;
@@ -146,7 +157,7 @@ export function analyzeVoice(buf: Float32Array, sr: number, source: VoiceMetrics
     let g = f;
     while (g < track.length && track[g] != null) g++;
     const segStart = f * hopFull;
-    const segEnd = Math.min(x.length - 2, g * hopFull + frameLen * dec);
+    const segEnd = Math.min(xs.length - 2, g * hopFull + frameLen * dec);
     f = g;
     if (segEnd - segStart < sr * 0.1) continue;
     const pTimes: number[] = [];
@@ -154,7 +165,7 @@ export function analyzeVoice(buf: Float32Array, sr: number, source: VoiceMetrics
     let T = sr / (f0At(segStart) ?? med);
     let p = segStart;
     let best = -Infinity;
-    for (let i = segStart; i < Math.min(segEnd, segStart + T); i++) if (x[i] > best) { best = x[i]; p = i; }
+    for (let i = segStart; i < Math.min(segEnd, segStart + T); i++) if (xs[i] > best) { best = xs[i]; p = i; }
     while (true) {
       const fl = f0At(p) ?? med;
       if (!fl) break;
@@ -164,10 +175,10 @@ export function analyzeVoice(buf: Float32Array, sr: number, source: VoiceMetrics
       if (hi >= segEnd) break;
       let q = lo;
       let qv = -Infinity;
-      for (let i = lo; i <= hi; i++) if (x[i] > qv) { qv = x[i]; q = i; }
-      const a = x[q - 1];
-      const b = x[q];
-      const c = x[q + 1];
+      for (let i = lo; i <= hi; i++) if (xs[i] > qv) { qv = xs[i]; q = i; }
+      const a = xs[q - 1];
+      const b = xs[q];
+      const c = xs[q + 1];
       const den = a - 2 * b + c;
       const sh = den !== 0 ? (0.5 * (a - c)) / den : 0;
       pTimes.push((q + sh) / sr);

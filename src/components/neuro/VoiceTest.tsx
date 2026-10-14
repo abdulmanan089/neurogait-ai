@@ -199,7 +199,7 @@ export function VoiceTest({
       const r = recentRef.current;
       let e = 0;
       for (let i = WIN - 2048; i < WIN; i++) e += (r[i] ?? 0) ** 2;
-      setLevel(Math.min(1, Math.sqrt(e / 2048) * 6));
+      setLevel(Math.min(1, Math.sqrt(e / 2048) * 3));
       setPitch(livePitch(r.subarray(WIN - 2048), srRef.current));
       setElapsed(el);
     }
@@ -334,7 +334,7 @@ export function VoiceTest({
               <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                 Input level
                 <div className="h-2 flex-1 overflow-hidden rounded bg-muted">
-                  <div className={cn("h-full transition-[width]", level > 0.95 ? "bg-risk-elevated" : "bg-risk-low")} style={{ width: `${level * 100}%` }} />
+                  <div className={cn("h-full transition-[width]", level > 0.98 ? "bg-risk-elevated" : "bg-risk-low")} style={{ width: `${level * 100}%` }} />
                 </div>
                 {status === "recording" && level < 0.05 && <span className="text-risk-moderate">Too quiet</span>}
               </div>
