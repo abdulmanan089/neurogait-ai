@@ -397,6 +397,11 @@ export function MotorTest({
                   <Play className="mr-2 h-4 w-4" /> Start 24-second test
                 </Button>
                 {mode === "camera" && !handSeen && <span className="text-xs text-muted-foreground">Show your hand to the camera to begin.</span>}
+                {mode === "camera" && (
+                  <Button variant="outline" onClick={startSimulation}>
+                    <Sparkles className="mr-2 h-4 w-4" /> Use simulation instead
+                  </Button>
+                )}
                 <Button variant="ghost" onClick={reset}>
                   <CameraOff className="mr-2 h-4 w-4" /> Stop
                 </Button>
