@@ -121,7 +121,7 @@ function GazeTrace({ data }: { data: { t: number; target: number; gaze: number |
 export function OcularCharts({ o }: { o: OcularMetrics }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Panel title="Horizontal saccades" sub={`dashed = target · median ${o.saccadeLatencyMs.toFixed(0)} ms`}>
+      <Panel title="Horizontal saccades" sub={`median ${o.saccadeLatencyMs.toFixed(0)} ms`}>
         <GazeTrace data={o.saccadeSeries} />
       </Panel>
       <Panel title="Smooth pursuit" sub={`gain ${o.pursuitGain.toFixed(2)}`}>
