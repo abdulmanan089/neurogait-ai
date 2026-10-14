@@ -1,9 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+// Assessment wizard shell: Intake -> Motor -> Voice -> Oculomotor -> Results -> Report.
 import { useEffect, useMemo, useState } from "react";
-import { Brain, Check } from "lucide-react";
+import { Brain, Check, LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { AssessmentProvider, useAssessment } from "@/lib/neuro/store";
 import { computeRisk } from "@/lib/neuro/scoring";
+import { uploadAssessment } from "@/lib/neuro/cloud";
+import { buildReportPdf, downloadBlob } from "@/lib/neuro/pdf";
 import { Dashboard } from "@/components/neuro/Dashboard";
 import { Intake } from "@/components/neuro/Intake";
 import { MotorTest } from "@/components/neuro/MotorTest";
@@ -13,21 +18,7 @@ import { Results } from "@/components/neuro/Results";
 import { Report } from "@/components/neuro/Report";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "NeuroGait Vision — Motor, Voice & Oculomotor Screening" },
-      { name: "description", content: "Research tool combining webcam tremor and finger-tapping analysis, vocal biomarkers and eye-movement tracking into a transparent screening score." },
-      { property: "og:title", content: "NeuroGait Vision — Motor, Voice & Oculomotor Screening" },
-      { property: "og:description", content: "Webcam hand and eye tracking plus voice analysis for preliminary neurological screening research." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: Page,
-});
-
-function Page() {
+export function AssessmentApp() {
   return (
     <AssessmentProvider>
       <App />
