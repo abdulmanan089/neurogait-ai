@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assessments: {
+        Row: {
+          age: number | null
+          created_at: string
+          features: Json
+          id: string
+          model_version: string
+          patient_ref: string
+          quality: Json
+          risk_level: string | null
+          risk_score: number | null
+          sex: string | null
+          sources: Json
+          user_id: string
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string
+          features?: Json
+          id: string
+          model_version?: string
+          patient_ref?: string
+          quality?: Json
+          risk_level?: string | null
+          risk_score?: number | null
+          sex?: string | null
+          sources?: Json
+          user_id?: string
+        }
+        Update: {
+          age?: number | null
+          created_at?: string
+          features?: Json
+          id?: string
+          model_version?: string
+          patient_ref?: string
+          quality?: Json
+          risk_level?: string | null
+          risk_score?: number | null
+          sex?: string | null
+          sources?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
