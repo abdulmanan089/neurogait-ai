@@ -247,7 +247,7 @@ export function synthesizeVoice(
   const base = sex === "female" ? 205 : sex === "male" ? 118 : 160;
   const p =
     profile === "parkinsonian"
-      ? { jit: 0.016, shim: 0.085, noise: 0.07, trem: 0.018 }
+      ? { jit: 0.0075, shim: 0.075, noise: 0.07, trem: 0.018 }
       : { jit: 0.0035, shim: 0.022, noise: 0.012, trem: 0.002 };
   const N = Math.floor(sr * dur);
   const out = new Float32Array(N);
