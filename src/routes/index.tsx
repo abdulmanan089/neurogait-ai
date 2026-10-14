@@ -8,6 +8,7 @@ import { Dashboard } from "@/components/neuro/Dashboard";
 import { Intake } from "@/components/neuro/Intake";
 import { MotorTest } from "@/components/neuro/MotorTest";
 import { VoiceTest } from "@/components/neuro/VoiceTest";
+import { OcularTest } from "@/components/neuro/OcularTest";
 import { Results } from "@/components/neuro/Results";
 import { Report } from "@/components/neuro/Report";
 import { cn } from "@/lib/utils";
@@ -15,10 +16,10 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "NeuroGait Vision — Multimodal Motor & Voice Screening" },
-      { name: "description", content: "Research tool for webcam tremor and finger-tapping analysis plus vocal biomarkers, combined into a transparent screening score and report." },
-      { property: "og:title", content: "NeuroGait Vision — Multimodal Motor & Voice Screening" },
-      { property: "og:description", content: "Webcam hand tracking and voice analysis for preliminary neurological motor screening research." },
+      { title: "NeuroGait Vision — Motor, Voice & Oculomotor Screening" },
+      { name: "description", content: "Research tool combining webcam tremor and finger-tapping analysis, vocal biomarkers and eye-movement tracking into a transparent screening score." },
+      { property: "og:title", content: "NeuroGait Vision — Motor, Voice & Oculomotor Screening" },
+      { property: "og:description", content: "Webcam hand and eye tracking plus voice analysis for preliminary neurological screening research." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -35,11 +36,12 @@ function Page() {
   );
 }
 
-type View = "dashboard" | "intake" | "motor" | "voice" | "results" | "report";
+type View = "dashboard" | "intake" | "motor" | "voice" | "ocular" | "results" | "report";
 const STEPS: { id: View; label: string }[] = [
   { id: "intake", label: "Intake" },
   { id: "motor", label: "Motor" },
   { id: "voice", label: "Voice" },
+  { id: "ocular", label: "Oculomotor" },
   { id: "results", label: "Results" },
   { id: "report", label: "Report" },
 ];
@@ -47,7 +49,7 @@ const STEPS: { id: View; label: string }[] = [
 function App() {
   const { session, start, open, update, save, close } = useAssessment();
   const [view, setView] = useState<View>("dashboard");
-  const risk = useMemo(() => computeRisk(session?.motor ?? null, session?.voice ?? null), [session?.motor, session?.voice]);
+  const risk = useMemo(() => computeRisk(session?.motor ?? null, session?.voice ?? null, session?.ocular ?? null), [session?.motor, session?.voice, session?.ocular]);
 
   useEffect(() => {
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
@@ -60,8 +62,8 @@ function App() {
     if (v === "intake") return true;
     const intakeOk = (session.patient.name || session.patient.patientId) && session.patient.consent && session.patient.age;
     if (!intakeOk) return false;
-    if (v === "motor" || v === "voice") return true;
-    return !!(session.motor || session.voice);
+    if (v === "motor" || v === "voice" || v === "ocular") return true;
+    return !!(session.motor || session.voice || session.ocular);
   };
 
   return (
@@ -91,7 +93,8 @@ function App() {
                   (s.id === "intake" && stepIdx > 0) ||
                   (s.id === "motor" && !!session.motor) ||
                   (s.id === "voice" && !!session.voice) ||
-                  (s.id === "results" && stepIdx > 3);
+                  (s.id === "ocular" && !!session.ocular) ||
+                  (s.id === "results" && stepIdx > 4);
                 const can = reachable(s.id);
                 return (
                   <li key={s.id} className="flex items-center gap-1">
@@ -140,15 +143,23 @@ function App() {
             existing={session.voice}
             sex={session.patient.sex}
             onBack={() => go("motor")}
-            onComplete={(v) => { update({ voice: v }); go(session.motor || v ? "results" : "motor"); }}
+            onComplete={(v) => { update({ voice: v }); go("ocular"); }}
+          />
+        )}
+        {session && view === "ocular" && (
+          <OcularTest
+            key={`ocular-${session.id}`}
+            existing={session.ocular ?? null}
+            onBack={() => go("voice")}
+            onComplete={(o) => { update({ ocular: o }); go(session.motor || session.voice || o ? "results" : "motor"); }}
           />
         )}
         {session && view === "results" && (
           <Results
             risk={risk}
-            onBack={() => go("voice")}
+            onBack={() => go("ocular")}
             onReport={() => { save(); go("report"); }}
-            onRetest={(m) => { update(m === "motor" ? { motor: null } : { voice: null }); go(m); }}
+            onRetest={(m) => { update(m === "motor" ? { motor: null } : m === "voice" ? { voice: null } : { ocular: null }); go(m); }}
           />
         )}
         {session && view === "report" && (

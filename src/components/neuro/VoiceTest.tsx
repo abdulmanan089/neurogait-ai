@@ -406,7 +406,7 @@ export function VoiceTest({
         <Button variant="ghost" onClick={onBack}>Back</Button>
         <div className="flex gap-2">
           {!result && <Button variant="outline" onClick={() => { teardown(); onComplete(null); }}>Skip this module</Button>}
-          <Button disabled={!result} onClick={() => onComplete(result)}>View screening results</Button>
+          <Button disabled={!result} onClick={() => onComplete(result)}>Continue to eye test</Button>
         </div>
       </div>
     </div>

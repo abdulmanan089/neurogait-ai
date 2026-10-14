@@ -1,19 +1,22 @@
 import type { MotorMetrics } from "./motor";
 import type { VoiceMetrics } from "./voice";
+import type { OcularMetrics } from "./ocular";
+
+export type Modality = "motor" | "voice" | "ocular";
 
 export type RiskLevel = "Low" | "Moderate" | "Elevated";
 
 type FeatureDef = {
   key: string;
   label: string;
-  modality: "motor" | "voice";
+  modality: Modality;
   unit: string;
   weight: number;
   normal: number; // value at which concern starts
   abnormal: number; // value at which concern saturates
   higherIsWorse: boolean;
   normText: string;
-  get: (m: MotorMetrics | null, v: VoiceMetrics | null) => number | null;
+  get: (m: MotorMetrics | null, v: VoiceMetrics | null, o: OcularMetrics | null) => number | null;
   digits: number;
 };
 
@@ -26,12 +29,15 @@ export const FEATURES: FeatureDef[] = [
   { key: "shimmer", label: "Shimmer (local)", modality: "voice", unit: "%", weight: 0.12, normal: 3.81, abnormal: 8, higherIsWorse: true, normText: "≤ 3.81 %", digits: 2, get: (_m, v) => (v && v.shimmerPct > 0 ? v.shimmerPct : null) },
   { key: "hnr", label: "Harmonics-to-noise ratio", modality: "voice", unit: "dB", weight: 0.1, normal: 20, abnormal: 12, higherIsWorse: false, normText: "≥ 20 dB", digits: 1, get: (_m, v) => (v && v.voicedPct > 0 ? v.hnrDb : null) },
   { key: "f0sd", label: "Pitch stability (F0 SD)", modality: "voice", unit: "st", weight: 0.04, normal: 0.5, abnormal: 1.5, higherIsWorse: true, normText: "≤ 0.5 semitones", digits: 2, get: (_m, v) => (v && v.voicedPct > 0 ? v.f0SdSemitones : null) },
+  { key: "latency", label: "Saccadic latency", modality: "ocular", unit: "ms", weight: 0.12, normal: 250, abnormal: 400, higherIsWorse: true, normText: "≈ 180–250 ms", digits: 0, get: (_m, _v, o) => (o && o.saccadeCount >= 3 ? o.saccadeLatencyMs : null) },
+  { key: "pursuit", label: "Smooth-pursuit gain", modality: "ocular", unit: "", weight: 0.1, normal: 0.85, abnormal: 0.55, higherIsWorse: false, normText: "≥ 0.85", digits: 2, get: (_m, _v, o) => (o && o.pursuitGain > 0 ? o.pursuitGain : null) },
+  { key: "fixation", label: "Fixation instability (SD)", modality: "ocular", unit: "°", weight: 0.06, normal: 0.4, abnormal: 1.2, higherIsWorse: true, normText: "≤ 0.4°", digits: 2, get: (_m, _v, o) => (o && o.fixationSdDeg > 0 ? o.fixationSdDeg : null) },
 ];
 
 export type FeatureResult = {
   key: string;
   label: string;
-  modality: "motor" | "voice";
+  modality: Modality;
   unit: string;
   value: number | null;
   display: string;
@@ -47,6 +53,7 @@ export type RiskResult = {
   level: RiskLevel;
   motorScore: number | null;
   voiceScore: number | null;
+  ocularScore: number | null;
   features: FeatureResult[];
   coverage: number; // fraction of total weight that was measurable
   confidence: "Standard" | "Reduced";
@@ -63,16 +70,16 @@ export function levelFor(score: number): RiskLevel {
   return score < 30 ? "Low" : score < 55 ? "Moderate" : "Elevated";
 }
 
-export function computeRisk(motor: MotorMetrics | null, voice: VoiceMetrics | null): RiskResult {
+export function computeRisk(motor: MotorMetrics | null, voice: VoiceMetrics | null, ocular: OcularMetrics | null = null): RiskResult {
   const rows = FEATURES.map((f) => {
-    const value = f.get(motor, voice);
+    const value = f.get(motor, voice, ocular);
     const concern = value == null || !Number.isFinite(value) ? 0 : concernOf(f, value);
     return { f, value: value != null && Number.isFinite(value) ? value : null, concern };
   });
   const avail = rows.filter((r) => r.value != null);
   const wSum = avail.reduce((s, r) => s + r.f.weight, 0);
   const score = wSum > 0 ? (avail.reduce((s, r) => s + r.f.weight * r.concern, 0) / wSum) * 100 : 0;
-  const mod = (k: "motor" | "voice") => {
+  const mod = (k: Modality) => {
     const a = avail.filter((r) => r.f.modality === k);
     const w = a.reduce((s, r) => s + r.f.weight, 0);
     return w > 0 ? (a.reduce((s, r) => s + r.f.weight * r.concern, 0) / w) * 100 : null;
@@ -83,7 +90,7 @@ export function computeRisk(motor: MotorMetrics | null, voice: VoiceMetrics | nu
     modality: f.modality,
     unit: f.unit,
     value,
-    display: value == null ? "—" : `${value.toFixed(f.digits)} ${f.unit}`,
+    display: value == null ? "—" : `${value.toFixed(f.digits)}${f.unit ? (f.unit === "°" ? "°" : ` ${f.unit}`) : ""}`,
     normText: f.normText,
     concern,
     weight: f.weight,
@@ -93,15 +100,18 @@ export function computeRisk(motor: MotorMetrics | null, voice: VoiceMetrics | nu
   const notes: string[] = [];
   if (!motor) notes.push("Motor assessment was not completed.");
   if (!voice) notes.push("Vocal assessment was not completed.");
+  if (!ocular) notes.push("Oculomotor assessment was not completed.");
+  if (ocular?.quality === "limited") notes.push("Eye-tracking quality was limited.");
   if (motor?.quality === "limited") notes.push("Motor recording quality was limited.");
   if (voice?.quality === "limited") notes.push("Voice recording quality was limited.");
-  if (motor?.source === "simulation" || voice?.source === "simulation") notes.push("One or more modules used simulated data, not a real recording.");
+  if (motor?.source === "simulation" || voice?.source === "simulation" || ocular?.source === "simulation") notes.push("One or more modules used simulated data, not a real recording.");
   const coverage = wSum;
   return {
     score,
     level: levelFor(score),
     motorScore: mod("motor"),
     voiceScore: mod("voice"),
+    ocularScore: mod("ocular"),
     features,
     coverage,
     confidence: notes.length ? "Reduced" : "Standard",
@@ -109,7 +119,7 @@ export function computeRisk(motor: MotorMetrics | null, voice: VoiceMetrics | nu
   };
 }
 
-export function observations(motor: MotorMetrics | null, voice: VoiceMetrics | null, risk: RiskResult): string[] {
+export function observations(motor: MotorMetrics | null, voice: VoiceMetrics | null, risk: RiskResult, ocular: OcularMetrics | null = null): string[] {
   const o: string[] = [];
   const blank: FeatureResult = { key: "", label: "", modality: "motor", unit: "", value: null, display: "—", normText: "", concern: 0, weight: 0, contribution: 0, status: "unavailable" };
   const get = (k: string) => risk.features.find((x) => x.key === k) ?? blank;
@@ -143,6 +153,26 @@ export function observations(motor: MotorMetrics | null, voice: VoiceMetrics | n
         ? `Voice perturbation measures outside reference ranges: ${out.map((x) => x.label.toLowerCase()).join(", ")}.`
         : "Voice perturbation measures were within reference ranges.",
     );
+  }
+  if (ocular) {
+    const lat = get("latency"), pur = get("pursuit"), fix = get("fixation");
+    o.push(
+      lat.value != null
+        ? `Median saccadic latency was ${ocular.saccadeLatencyMs.toFixed(0)} ms over ${ocular.saccadeCount} saccades (gain ${ocular.saccadeGain.toFixed(2)})${lat.status === "within" ? ", within the typical range." : ", which is slower than the typical 180–250 ms range."}`
+        : "Saccadic latency could not be measured reliably.",
+    );
+    if (pur.value != null)
+      o.push(
+        pur.status === "within"
+          ? `Smooth pursuit was accurate (gain ${ocular.pursuitGain.toFixed(2)}, ${ocular.catchUpPerSec.toFixed(1)} catch-up saccades/s).`
+          : `Smooth pursuit gain was reduced to ${ocular.pursuitGain.toFixed(2)} with ${ocular.catchUpPerSec.toFixed(1)} catch-up saccades per second, a "saccadic pursuit" pattern.`,
+      );
+    if (fix.value != null)
+      o.push(
+        fix.status === "within"
+          ? `Central fixation was stable (SD ${ocular.fixationSdDeg.toFixed(2)}°).`
+          : `Fixation was unstable (SD ${ocular.fixationSdDeg.toFixed(2)}°, ${ocular.intrusionsPerSec.toFixed(1)} intrusions/s), consistent with square-wave jerks or drift.`,
+      );
   }
   o.push(
     risk.level === "Low"

@@ -86,7 +86,7 @@ export function ContributionChart({ risk }: { risk: RiskResult }) {
     .map((f) => ({ name: f.label, value: Math.round(f.contribution * 10) / 10, status: f.status }))
     .sort((a, b) => b.value - a.value);
   return (
-    <div className="h-64">
+    <div className="h-80">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 8 }}>
           <XAxis type="number" domain={[0, (max: number) => Math.max(10, Math.ceil(max))]} tick={{ fontSize: 10 }} tickFormatter={(v) => `${v}`} />
@@ -103,11 +103,11 @@ export function ContributionChart({ risk }: { risk: RiskResult }) {
   );
 }
 
-export function Results({ risk, onBack, onReport, onRetest }: { risk: RiskResult; onBack: () => void; onReport: () => void; onRetest: (m: "motor" | "voice") => void }) {
+export function Results({ risk, onBack, onReport, onRetest }: { risk: RiskResult; onBack: () => void; onReport: () => void; onRetest: (m: "motor" | "voice" | "ocular") => void }) {
   const fmt = (v: number | null) => (v == null ? "—" : v.toFixed(0));
   return (
     <div>
-      <SectionTitle eyebrow="Step 4 · Decision support" title="Multimodal screening summary" desc="Kinematic and acoustic features are compared with reference ranges and combined using fixed, transparent weights." />
+      <SectionTitle eyebrow="Step 5 · Decision support" title="Multimodal screening summary" desc="Kinematic, acoustic and oculomotor features are compared with reference ranges and combined using fixed, transparent weights." />
       <Disclaimer className="mb-6" />
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="flex flex-col items-center rounded-lg border bg-card p-6 text-center">
@@ -115,14 +115,18 @@ export function Results({ risk, onBack, onReport, onRetest }: { risk: RiskResult
           <Gauge score={risk.score} />
           <p className="font-mono text-5xl font-bold tabular">{risk.score.toFixed(0)}<span className="text-lg text-muted-foreground">/100</span></p>
           <RiskBadge level={risk.level} className="mt-3 px-3 py-1 text-sm" />
-          <div className="mt-5 grid w-full grid-cols-2 gap-3 text-left">
+          <div className="mt-5 grid w-full grid-cols-3 gap-2 text-left">
             <div className="rounded-md bg-muted p-3">
-              <p className="text-xs text-muted-foreground">Motor sub-score</p>
+              <p className="text-xs text-muted-foreground">Motor</p>
               <p className="font-mono text-xl font-semibold">{fmt(risk.motorScore)}</p>
             </div>
             <div className="rounded-md bg-muted p-3">
-              <p className="text-xs text-muted-foreground">Vocal sub-score</p>
+              <p className="text-xs text-muted-foreground">Vocal</p>
               <p className="font-mono text-xl font-semibold">{fmt(risk.voiceScore)}</p>
+            </div>
+            <div className="rounded-md bg-muted p-3">
+              <p className="text-xs text-muted-foreground">Ocular</p>
+              <p className="font-mono text-xl font-semibold">{fmt(risk.ocularScore)}</p>
             </div>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">Bands: Low &lt; 30 · Moderate 30–54 · Elevated ≥ 55</p>
@@ -143,7 +147,7 @@ export function Results({ risk, onBack, onReport, onRetest }: { risk: RiskResult
         <h3 className="mb-3 font-semibold">Comparison with normative reference ranges</h3>
         <FeatureTable risk={risk} />
         <p className="mt-2 text-xs text-muted-foreground">
-          Reference limits draw on commonly cited values (e.g. MDVP/Praat thresholds for jitter 1.04 %, shimmer 3.81 %, HNR 20 dB) and published finger-tapping norms. They have not been calibrated for this device setup.
+          Reference limits draw on commonly cited values (e.g. MDVP/Praat thresholds for jitter 1.04 %, shimmer 3.81 %, HNR 20 dB) and published finger-tapping norms, and typical oculomotor values (saccadic latency ≈ 180–250 ms, pursuit gain ≥ 0.85). They have not been calibrated for this device setup.
         </p>
       </div>
       <div className="mt-8 flex flex-wrap justify-between gap-2 border-t pt-4">
@@ -151,6 +155,7 @@ export function Results({ risk, onBack, onReport, onRetest }: { risk: RiskResult
           <Button variant="ghost" onClick={onBack}>Back</Button>
           <Button variant="outline" onClick={() => onRetest("motor")}>Redo motor test</Button>
           <Button variant="outline" onClick={() => onRetest("voice")}>Redo voice test</Button>
+          <Button variant="outline" onClick={() => onRetest("ocular")}>Redo eye test</Button>
         </div>
         <Button onClick={onReport}>Generate patient report</Button>
       </div>

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { MotorMetrics } from "./motor";
 import type { VoiceMetrics } from "./voice";
+import type { OcularMetrics } from "./ocular";
 
 export type Patient = {
   name: string;
@@ -21,6 +22,8 @@ export type Session = {
   patient: Patient;
   motor: MotorMetrics | null;
   voice: VoiceMetrics | null;
+  /** Optional so sessions saved before the oculomotor module still load. */
+  ocular?: OcularMetrics | null;
   clinicianNotes: string;
 };
 
@@ -85,6 +88,7 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
           patient: emptyPatient(),
           motor: null,
           voice: null,
+          ocular: null,
           clinicianNotes: "",
         }),
       open: (id) => {
