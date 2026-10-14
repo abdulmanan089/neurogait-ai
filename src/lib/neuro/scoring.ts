@@ -111,7 +111,9 @@ export function computeRisk(motor: MotorMetrics | null, voice: VoiceMetrics | nu
 
 export function observations(motor: MotorMetrics | null, voice: VoiceMetrics | null, risk: RiskResult): string[] {
   const o: string[] = [];
-  const f = Object.fromEntries(risk.features.map((x) => [x.key, x]));
+  const blank: FeatureResult = { key: "", label: "", modality: "motor", unit: "", value: null, display: "—", normText: "", concern: 0, weight: 0, contribution: 0, status: "unavailable" };
+  const get = (k: string) => risk.features.find((x) => x.key === k) ?? blank;
+  const f = { tapRate: get("tapRate"), decay: get("decay"), tremor: get("tremor"), jitter: get("jitter"), shimmer: get("shimmer"), hnr: get("hnr") };
   if (motor) {
     if (f.tapRate.status === "unavailable") o.push("Finger-tapping speed could not be measured.");
     else
@@ -135,10 +137,10 @@ export function observations(motor: MotorMetrics | null, voice: VoiceMetrics | n
     o.push(
       `Sustained phonation: mean F0 ${voice.f0Mean.toFixed(1)} Hz, jitter ${voice.jitterPct.toFixed(2)}%, shimmer ${voice.shimmerPct.toFixed(2)}%, HNR ${voice.hnrDb.toFixed(1)} dB.`,
     );
-    const out = ["jitter", "shimmer", "hnr"].filter((k) => f[k].status === "outside" || f[k].status === "borderline");
+    const out = [f.jitter, f.shimmer, f.hnr].filter((x) => x.status === "outside" || x.status === "borderline");
     o.push(
       out.length
-        ? `Voice perturbation measures outside reference ranges: ${out.map((k) => f[k].label.toLowerCase()).join(", ")}.`
+        ? `Voice perturbation measures outside reference ranges: ${out.map((x) => x.label.toLowerCase()).join(", ")}.`
         : "Voice perturbation measures were within reference ranges.",
     );
   }

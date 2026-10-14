@@ -139,7 +139,7 @@ export function MotorTest({
       for (let y = 0; y < H; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
     }
     if (!lm) return;
-    const P = (i: number) => [lm[i].x * W, lm[i].y * H] as const;
+    const P = (i: number) => [(lm[i]?.x ?? 0) * W, (lm[i]?.y ?? 0) * H] as const;
     ctx.lineWidth = 3;
     ctx.strokeStyle = cssVar("--signal", "#14b8a6");
     for (const [a, b] of HAND_CONNECTIONS) {
@@ -191,11 +191,11 @@ export function MotorTest({
       let acc = 0;
       idx = SCHEDULE.length - 1;
       for (let i = 0; i < SCHEDULE.length; i++) {
-        acc += SCHEDULE[i].dur;
+        acc += SCHEDULE[i]!.dur;
         if (el < acc) { idx = i; break; }
       }
     }
-    const phaseId = running ? SCHEDULE[idx].id : "idle";
+    const phaseId = running ? (SCHEDULE[idx]?.id ?? "tap") : "idle";
     const phase: MotorPhase | null = phaseId === "rest" ? "rest" : phaseId === "tap" ? "tap" : null;
 
     if (modeRef.current === "camera") {
@@ -316,7 +316,7 @@ export function MotorTest({
     setStatus("idle");
   };
 
-  const phase = SCHEDULE[phaseIdx];
+  const phase = SCHEDULE[phaseIdx] ?? SCHEDULE[0]!;
   const phaseStart = SCHEDULE.slice(0, phaseIdx).reduce((s, p) => s + p.dur, 0);
   const remaining = Math.max(0, Math.ceil(phaseStart + phase.dur - elapsed));
   const isTap = status === "running" && phase.id === "tap";
@@ -452,7 +452,7 @@ export function MotorTest({
                 <Metric label="Tapping speed" value={result.tapRate.toFixed(2)} unit="taps/s" />
                 <Metric label="Amplitude decrement" value={result.amplitudeDecayPct.toFixed(1)} unit="%" />
                 <Metric label="Rhythm variability" value={result.rhythmCV.toFixed(1)} unit="% CV" />
-                <Metric label="Rest tremor (3–7 Hz)" value={result.tremorAmpPct.toFixed(2)} unit="% hand" hint={result.tremorFreqHz ? `Peak ${result.tremorFreqHz.toFixed(1)} Hz` : undefined} />
+                <Metric label="Rest tremor (3–7 Hz)" value={result.tremorAmpPct.toFixed(2)} unit="% hand" hint={result.tremorFreqHz ? `Peak ${result.tremorFreqHz.toFixed(1)} Hz` : "No band peak"} />
               </div>
               {result.qualityNotes.length > 0 && (
                 <ul className="list-disc space-y-1 rounded-md border border-risk-moderate/40 bg-risk-moderate/10 p-3 pl-6 text-xs">

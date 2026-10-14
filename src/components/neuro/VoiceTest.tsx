@@ -114,7 +114,7 @@ export function VoiceTest({
         const off = WIN - n;
         for (let i = 0; i < n; i++) {
           const x = (i / n) * W;
-          const y = H / 2 - buf[off + i] * H * 0.9;
+          const y = H / 2 - (buf[off + i] ?? 0) * H * 0.9;
           if (i) g.lineTo(x, y);
           else g.moveTo(x, y);
         }
@@ -132,7 +132,7 @@ export function VoiceTest({
         const maxBin = Math.min(mags.length, Math.floor((4000 / sr) * 2048));
         const bw = W / maxBin;
         for (let k = 1; k < maxBin; k++) {
-          const v = Math.max(0, Math.min(1, (mags[k] + 100) / 80));
+          const v = Math.max(0, Math.min(1, ((mags[k] ?? -100) + 100) / 80));
           g.fillStyle = k * (sr / 2048) < 500 ? sig2 : sig;
           g.fillRect(k * bw, H - v * H, Math.max(1, bw - 0.5), v * H);
         }
@@ -198,7 +198,7 @@ export function VoiceTest({
       lastUiRef.current = now;
       const r = recentRef.current;
       let e = 0;
-      for (let i = WIN - 2048; i < WIN; i++) e += r[i] * r[i];
+      for (let i = WIN - 2048; i < WIN; i++) e += (r[i] ?? 0) ** 2;
       setLevel(Math.min(1, Math.sqrt(e / 2048) * 6));
       setPitch(livePitch(r.subarray(WIN - 2048), srRef.current));
       setElapsed(el);
