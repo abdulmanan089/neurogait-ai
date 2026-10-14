@@ -47,6 +47,28 @@ function App() {
   }, [view]);
 
   const go = (v: View) => setView(v);
+
+  // Save locally (full session incl. charts) and sync ONLY the numeric feature vector to Lovable Cloud.
+  const saveAndSync = async () => {
+    save();
+    if (!session) return;
+    try {
+      await uploadAssessment(session, risk);
+      toast.success("Feature vector saved securely to your account");
+    } catch (e) {
+      toast.error(`Saved on this device only — cloud sync failed${e instanceof Error ? ` (${e.message})` : ""}.`);
+    }
+  };
+  const downloadPdf = async () => {
+    if (!session) return;
+    try {
+      const blob = await buildReportPdf(session, risk);
+      const ref = (session.patient.patientId || session.patient.name || "patient").replace(/[^a-z0-9-_]+/gi, "_");
+      downloadBlob(blob, `NeuroGait_${ref}_${session.createdAt.slice(0, 10)}.pdf`);
+    } catch {
+      toast.error("Could not create the PDF. Please try again.");
+    }
+  };
   const stepIdx = STEPS.findIndex((s) => s.id === view);
   const reachable = (v: View) => {
     if (!session) return false;
@@ -75,6 +97,9 @@ function App() {
               {session.patient.name || session.patient.patientId || "New patient"}
             </span>
           )}
+          <Button variant="ghost" size="sm" onClick={() => supabase.auth.signOut()}>
+            <LogOut className="mr-1.5 h-4 w-4" /> Sign out
+          </Button>
         </div>
         {session && view !== "dashboard" && (
           <nav aria-label="Assessment steps" className="mx-auto max-w-7xl overflow-x-auto px-4 pb-3 sm:px-6">
@@ -149,12 +174,13 @@ function App() {
           <Results
             risk={risk}
             onBack={() => go("ocular")}
-            onReport={() => { save(); go("report"); }}
+            onReport={() => { void saveAndSync(); go("report"); }}
+            onDownloadPdf={downloadPdf}
             onRetest={(m) => { update(m === "motor" ? { motor: null } : m === "voice" ? { voice: null } : { ocular: null }); go(m); }}
           />
         )}
         {session && view === "report" && (
-          <Report session={session} risk={risk} onNotes={(n) => update({ clinicianNotes: n })} onSave={save} onBack={() => go("results")} />
+          <Report session={session} risk={risk} onNotes={(n) => update({ clinicianNotes: n })} onSave={() => void saveAndSync()} onDownloadPdf={downloadPdf} onBack={() => go("results")} />
         )}
       </main>
     </div>
