@@ -122,6 +122,7 @@ export function OcularTest({
   const [eyesSeen, setEyesSeen] = useState(false);
   const [live, setLive] = useState<{ t: number; target: number; gaze: number | null }[]>([]);
   const [result, setResult] = useState<OcularMetrics | null>(existing);
+  const luma = useBrightness(videoRef, mode === "camera" && (status === "live" || status === "running"));
 
   const stopAll = useCallback(() => {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
