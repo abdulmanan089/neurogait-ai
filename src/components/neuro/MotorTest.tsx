@@ -29,7 +29,6 @@ const TOTAL = SCHEDULE.reduce((s, p) => s + p.dur, 0);
 type Status = "idle" | "loading" | "live" | "running" | "done";
 type Mode = "camera" | "simulation";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Landmarker = { detectForVideo: (v: HTMLVideoElement, t: number) => { landmarks?: Landmark[][] }; close: () => void };
 
 async function loadLandmarker(): Promise<Landmarker> {
@@ -320,6 +319,7 @@ export function MotorTest({
   const phase = SCHEDULE[phaseIdx];
   const phaseStart = SCHEDULE.slice(0, phaseIdx).reduce((s, p) => s + p.dur, 0);
   const remaining = Math.max(0, Math.ceil(phaseStart + phase.dur - elapsed));
+  const isTap = status === "running" && phase.id === "tap";
   const showFeed = status === "live" || status === "running" || status === "loading";
 
   return (
@@ -343,7 +343,7 @@ export function MotorTest({
             {!showFeed && status !== "done" && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-ink-foreground">
                 <Hand className="h-10 w-10 opacity-60" aria-hidden />
-                <p className="max-w-sm text-sm opacity-80">Position the {""}hand about 40–60 cm from the camera in good, even lighting.</p>
+                <p className="max-w-sm text-sm opacity-80">Position the hand about 40–60 cm from the camera in good, even lighting.</p>
               </div>
             )}
             {status === "done" && (
@@ -427,9 +427,9 @@ export function MotorTest({
           <div className="rounded-lg border bg-card p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">
-                {status === "running" && SCHEDULE[phaseIdx].id.toLowerCase().includes("tap") ? "Thumb–index aperture" : "Index-tip displacement"}
+                {isTap ? "Thumb–index aperture" : "Index-tip displacement"}
               </h3>
-              <span className="font-mono text-[11px] text-muted-foreground">{status === "running" && phase.id.includes("Tap") || phase.id === "tap" ? "× hand size" : "% hand size"}</span>
+              <span className="font-mono text-[11px] text-muted-foreground">{isTap ? "× hand size" : "% hand size"}</span>
             </div>
             <div className="mt-2 h-40">
               {live.length > 1 ? (
