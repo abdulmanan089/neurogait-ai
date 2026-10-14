@@ -1,6 +1,4 @@
-# NeuroGait proposal
+# NeuroGait
 
-- [x] Write all seven requested sections with references and a three-month plan.
-- [x] Generate a downloadable PDF for Manan.
-- [x] Inspect every final page and correct layout issues.
-- [x] Attach the PDF directly in chat.
+- [x] Proposal PDF delivered.
+- [x] App: intake, motor (MediaPipe + simulation), voice (Web Audio + simulation), risk dashboard, printable report.
