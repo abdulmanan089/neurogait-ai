@@ -7,6 +7,8 @@ import { analyzeVoice, livePitch, synthesizeVoice, type VoiceMetrics } from "@/l
 import type { SimProfile } from "@/lib/neuro/motor";
 import { cn } from "@/lib/utils";
 import { cssVar, Metric, SectionTitle, SourceTag } from "./common";
+import { GateBanner, LiveChecks } from "./QualityPanel";
+import { voiceGate } from "@/lib/neuro/quality";
 import { SimSelect } from "./MotorTest";
 import { VoiceCharts } from "./charts";
 
@@ -277,6 +279,14 @@ export function VoiceTest({
   };
 
   const active = status === "countdown" || status === "recording";
+  // Quality control: background noise during the countdown, loudness/clipping while recording.
+  const audioChecks = status === "countdown"
+    ? [{ id: "noise", label: "Background noise", ok: level < 0.12, hint: level < 0.12 ? "Room is quiet enough." : "Too noisy — stay silent until recording starts, or move somewhere quieter." }]
+    : [
+        { id: "loud", label: "Loudness", ok: level >= 0.05, hint: level >= 0.05 ? "Voice level is good." : "Too quiet — say 'ahh' louder or move closer." },
+        { id: "clip", label: "Clipping", ok: level <= 0.98, hint: level <= 0.98 ? "No distortion." : "Too loud — move slightly away from the microphone." },
+      ];
+  const gate = voiceGate(result);
   const countdownLeft = Math.max(1, Math.ceil(COUNTDOWN - elapsed));
   const recProgress = Math.min(100, Math.max(0, ((elapsed - COUNTDOWN) / REC) * 100));
 
@@ -363,6 +373,8 @@ export function VoiceTest({
               </Button>
             )}
           </div>
+          {mode === "microphone" && active && <LiveChecks title="Live audio checks" checks={audioChecks} />}
+          {status === "done" && <GateBanner gate={gate} />}
           {error && (
             <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
               <p>{error}</p>
@@ -406,7 +418,7 @@ export function VoiceTest({
         <Button variant="ghost" onClick={onBack}>Back</Button>
         <div className="flex gap-2">
           {!result && <Button variant="outline" onClick={() => { teardown(); onComplete(null); }}>Skip this module</Button>}
-          <Button disabled={!result} onClick={() => onComplete(result)}>Continue to eye test</Button>
+          <Button disabled={!result || !gate.pass} onClick={() => onComplete(result)}>Continue to eye test</Button>
         </div>
       </div>
     </div>

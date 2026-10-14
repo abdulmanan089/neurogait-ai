@@ -1,5 +1,4 @@
 import { Download, Printer, Save } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { observations, type RiskResult } from "@/lib/neuro/scoring";
@@ -13,12 +12,14 @@ export function Report({
   risk,
   onNotes,
   onSave,
+  onDownloadPdf,
   onBack,
 }: {
   session: Session;
   risk: RiskResult;
   onNotes: (n: string) => void;
   onSave: () => void;
+  onDownloadPdf?: () => void;
   onBack: () => void;
 }) {
   const p = session.patient;
@@ -48,12 +49,17 @@ export function Report({
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="ghost" onClick={onBack}>Back</Button>
-          <Button variant="outline" onClick={() => { onSave(); toast.success("Session saved to this device"); }}>
+          <Button variant="outline" onClick={onSave}>
             <Save className="mr-2 h-4 w-4" /> Save session
           </Button>
           <Button variant="outline" onClick={download}>
             <Download className="mr-2 h-4 w-4" /> Data (JSON)
           </Button>
+          {onDownloadPdf && (
+            <Button variant="outline" onClick={onDownloadPdf}>
+              <Download className="mr-2 h-4 w-4" /> Download PDF
+            </Button>
+          )}
           <Button onClick={() => { onSave(); window.print(); }}>
             <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
           </Button>
