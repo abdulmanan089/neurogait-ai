@@ -22,7 +22,7 @@ export function Disclaimer({ compact = false, className }: { compact?: boolean; 
       <AlertTriangle className={cn("shrink-0 text-risk-moderate", compact ? "h-4 w-4" : "h-5 w-5")} aria-hidden />
       <p>
         <strong className="font-semibold">Research screening tool — not a medical diagnosis.</strong>{" "}
-        NeuroGait Vision produces preliminary, experimental indicators only. Results must not be used to diagnose,
+        NeuroGait AI produces preliminary, experimental indicators only. Results must not be used to diagnose,
         exclude, or treat any condition and should be interpreted by a qualified clinician.
       </p>
     </div>
