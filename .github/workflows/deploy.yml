@@ -1,4 +1,6 @@
-# Build NeuroGait AI and deploy the static output to GitHub Pages on every push to main.
+# Deploy the pre-built static site committed in the repo to GitHub Pages.
+# The `site/` folder already contains index.html, 404.html, .nojekyll,
+# route pages and hashed assets built with the /neurogait-ai/ base path.
 name: Deploy to GitHub Pages
 
 on:
@@ -16,59 +18,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build
-        env:
-          # The site is served from https://<user>.github.io/neurogait-ai/,
-          # so assets must resolve under that exact subpath.
-          GITHUB_PAGES_BASE: /neurogait-ai/
-        run: bun run build
-
-      - name: Assemble static site
-        env:
-          GITHUB_PAGES_BASE: /neurogait-ai/
-        run: |
-          set -x
-          echo "Build output:"
-          ls -la dist || true
-          if [ ! -d dist/client ]; then
-            echo "dist/client is missing - nothing to publish"
-            exit 1
-          fi
-          rm -rf site && cp -r dist/client site
-          rm -f site/_headers
-          # A Bun-specific crash while loading the server bundle must not kill
-          # the deploy, so the same script gets a second chance on Node.
-          bun scripts/render-static.mjs site || node scripts/render-static.mjs site
-          touch site/.nojekyll
-          for f in index.html 404.html .nojekyll; do
-            test -f "site/$f" || { echo "missing site/$f"; exit 1; }
-          done
-          echo "Assembled site:"
-          ls -la site
-
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - uses: actions/checkout@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
