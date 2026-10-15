@@ -18,3 +18,4 @@
 - MediaPipe tasks-vision is dynamically imported inside the camera start handler; wasm URL version must match the installed package version.
 - Numeric DSP files use // @ts-nocheck because noUncheckedIndexedAccess adds noise to bounds-checked loops; keep UI/scoring files fully typed.
 - Sessions persist in localStorage (key neurogait.sessions.v1), read only in useEffect to avoid hydration mismatch.
+- Optional Python ML backend lives in backend/ (FastAPI + XGBoost); frontend calls it via src/lib/neuro/ml.ts with a 2.5s timeout and silently falls back to the in-browser heuristic so the app never depends on it.

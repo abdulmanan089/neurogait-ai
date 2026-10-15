@@ -58,6 +58,8 @@ export type RiskResult = {
   coverage: number; // fraction of total weight that was measurable
   confidence: "Standard" | "Reduced";
   confidenceNotes: string[];
+  engine?: "heuristic" | "ml"; // set to "ml" when the optional XGBoost backend scored the session
+  mlClass?: string;
 };
 
 function concernOf(f: FeatureDef, v: number) {

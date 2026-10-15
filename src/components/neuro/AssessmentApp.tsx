@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { AssessmentProvider, useAssessment } from "@/lib/neuro/store";
 import { computeRisk } from "@/lib/neuro/scoring";
+import { useMlRisk } from "@/lib/neuro/ml";
 import { buildReportPdf, downloadBlob } from "@/lib/neuro/pdf";
 import { Dashboard } from "@/components/neuro/Dashboard";
 import { Intake } from "@/components/neuro/Intake";
@@ -37,7 +38,8 @@ const STEPS: { id: View; label: string }[] = [
 function App() {
   const { session, start, open, update, save, close } = useAssessment();
   const [view, setView] = useState<View>("dashboard");
-  const risk = useMemo(() => computeRisk(session?.motor ?? null, session?.voice ?? null, session?.ocular ?? null), [session?.motor, session?.voice, session?.ocular]);
+  const heuristic = useMemo(() => computeRisk(session?.motor ?? null, session?.voice ?? null, session?.ocular ?? null), [session?.motor, session?.voice, session?.ocular]);
+  const { risk } = useMlRisk(heuristic, view === "results" || view === "report");
 
   useEffect(() => {
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });

@@ -112,6 +112,9 @@ export function Results({ risk, onBack, onReport, onRetest, onDownloadPdf }: { r
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="flex flex-col items-center rounded-lg border bg-card p-6 text-center">
           <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Combined screening score</p>
+          <span className="mt-2 rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            Mode: {risk.engine === "ml" ? `XGBoost ML Model${risk.mlClass ? ` · ${risk.mlClass}` : ""}` : "Edge Rule Heuristic"}
+          </span>
           <Gauge score={risk.score} />
           <p className="font-mono text-5xl font-bold tabular">{risk.score.toFixed(0)}<span className="text-lg text-muted-foreground">/100</span></p>
           <RiskBadge level={risk.level} className="mt-3 px-3 py-1 text-sm" />
