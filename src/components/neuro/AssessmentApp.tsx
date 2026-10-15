@@ -1,13 +1,10 @@
 // Assessment wizard shell: Intake -> Motor -> Voice -> Oculomotor -> Results -> Report.
 import { useEffect, useMemo, useState } from "react";
-import { Brain, Check, LogOut } from "lucide-react";
+import { Brain, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { AssessmentProvider, useAssessment } from "@/lib/neuro/store";
 import { computeRisk } from "@/lib/neuro/scoring";
-import { uploadAssessment } from "@/lib/neuro/cloud";
 import { buildReportPdf, downloadBlob } from "@/lib/neuro/pdf";
 import { Dashboard } from "@/components/neuro/Dashboard";
 import { Intake } from "@/components/neuro/Intake";
@@ -49,15 +46,10 @@ function App() {
   const go = (v: View) => setView(v);
 
   // Save locally (full session incl. charts) and sync ONLY the numeric feature vector to Lovable Cloud.
+  // Sessions are saved on this device; no account is needed.
   const saveAndSync = async () => {
     save();
-    if (!session) return;
-    try {
-      await uploadAssessment(session, risk);
-      toast.success("Feature vector saved securely to your account");
-    } catch (e) {
-      toast.error(`Saved on this device only — cloud sync failed${e instanceof Error ? ` (${e.message})` : ""}.`);
-    }
+    if (session) toast.success("Assessment saved on this device");
   };
   const downloadPdf = async () => {
     if (!session) return;
@@ -97,9 +89,6 @@ function App() {
               {session.patient.name || session.patient.patientId || "New patient"}
             </span>
           )}
-          <Button variant="ghost" size="sm" onClick={() => supabase.auth.signOut()}>
-            <LogOut className="mr-1.5 h-4 w-4" /> Sign out
-          </Button>
         </div>
         {session && view !== "dashboard" && (
           <nav aria-label="Assessment steps" className="mx-auto max-w-7xl overflow-x-auto px-4 pb-3 sm:px-6">

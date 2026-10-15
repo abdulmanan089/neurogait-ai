@@ -31,10 +31,9 @@ function Landing() {
         <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Research prototype</span>
       </div>
       <h1 className="mt-10 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-5xl">Three short tasks. Analysed on your device. Explained transparently.</h1>
-      <p className="mt-4 max-w-2xl text-muted-foreground">Video and audio never leave the browser. Only the final numeric features are saved to your private account.</p>
+      <p className="mt-4 max-w-2xl text-muted-foreground">Video and audio never leave the browser. No sign-in needed — results are saved on this device.</p>
       <div className="mt-8 flex gap-3">
         <Button asChild size="lg"><Link to="/assess">Start an assessment</Link></Button>
-        <Button asChild size="lg" variant="outline"><Link to="/auth">Sign in</Link></Button>
       </div>
       <div className="mt-14 grid gap-4 sm:grid-cols-3">
         {TASKS.map(({ icon: I, t, d }) => (
