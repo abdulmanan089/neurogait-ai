@@ -10,7 +10,7 @@ export default defineConfig({
   vite: {
     // GitHub Pages serves the site under /<repo>/, so assets must resolve
     // relative to that subpath. Locally and on root domains, "./" works the same.
-    base: process.env.GITHUB_PAGES_BASE ?? "./",
+    base: process.env["GITHUB_PAGES_BASE"] ?? "./",
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
