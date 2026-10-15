@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AssessmentApp } from "@/components/neuro/AssessmentApp";
 
-export const Route = createFileRoute("/_authenticated/assess")({
+export const Route = createFileRoute("/assess")({
   head: () => ({
     meta: [
       { title: "Assessment — NeuroGait AI" },
