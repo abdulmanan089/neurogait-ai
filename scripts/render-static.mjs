@@ -106,16 +106,33 @@ function shell() {
 }
 
 mkdirSync(out, { recursive: true });
+
+// Best effort: a crash here must never leave the deploy without pages.
+let rendered = false;
 try {
   const pages = await renderWithServer();
   for (const page of PAGES) write(page, pages[page]);
+  rendered = true;
   console.log("[pages] rendered pages with the built app");
 } catch (err) {
-  console.warn(`[pages] full render unavailable (${err?.message ?? err}); writing SPA shell instead`);
-  const html = shell();
-  for (const page of PAGES) write(page, html);
+  console.warn(`::warning:: full render unavailable (${err?.message ?? err}); writing SPA shell instead`);
 }
-writeFileSync(join(out, ".nojekyll"), "");
+
+if (!rendered) {
+  try {
+    const html = shell();
+    for (const page of PAGES) write(page, html);
+    console.warn("::warning:: served pages are the plain SPA shell, not the rendered app");
+  } catch (err) {
+    console.error(`[pages] shell generation failed: ${err?.message ?? err}`);
+  }
+}
+
+try {
+  writeFileSync(join(out, ".nojekyll"), "");
+} catch (err) {
+  console.error(`[pages] could not write .nojekyll: ${err?.message ?? err}`);
+}
 
 let ok = true;
 for (const f of ["index.html", "404.html", ".nojekyll"]) {
@@ -126,3 +143,4 @@ for (const f of ["index.html", "404.html", ".nojekyll"]) {
 if (!ok) process.exit(1);
 console.log(`[pages] static site ready in ${out}/ (base ${base})`);
 process.exit(0);
+
