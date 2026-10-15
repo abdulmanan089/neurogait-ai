@@ -11,7 +11,7 @@ type MlResponse = {
   contributions: { feature: string; shap: number }[];
 };
 
-const ML_URL: string = (import.meta.env.VITE_ML_API_URL as string | undefined) || "http://localhost:8000/predict";
+const ML_URL: string = (import.meta.env["VITE_ML_API_URL"] as string | undefined) || "http://localhost:8000/predict";
 
 async function callMl(risk: RiskResult, signal: AbortSignal): Promise<MlResponse | null> {
   const body = Object.fromEntries(risk.features.map((f) => [f.key, f.value]));
