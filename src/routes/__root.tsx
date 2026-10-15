@@ -78,9 +78,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "NeuroGait Vision" },
+      { title: "NeuroGait AI" },
       { name: "description", content: "Multimodal motor and vocal screening research tool." },
-      { property: "og:title", content: "NeuroGait Vision" },
+      { property: "og:title", content: "NeuroGait AI" },
       { property: "og:description", content: "Multimodal motor and vocal screening research tool." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

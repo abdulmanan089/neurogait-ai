@@ -82,7 +82,7 @@ function App() {
               <Brain className="h-4 w-4" aria-hidden />
             </span>
             <span className="text-left leading-tight">
-              <span className="block text-sm font-bold">NeuroGait Vision</span>
+              <span className="block text-sm font-bold">NeuroGait AI</span>
               <span className="block font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Research prototype</span>
             </span>
           </button>
