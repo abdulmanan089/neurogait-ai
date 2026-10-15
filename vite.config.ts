@@ -19,13 +19,8 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
-    // GitHub Pages is static-only: prerender every route to HTML for that build.
-    ...(pagesBase
-      ? {
-          router: { basepath: pagesBase },
-          pages: [{ path: "/" }, { path: "/assess" }, { path: "/auth" }],
-          prerender: { enabled: true, autoStaticPathsDiscovery: false },
-        }
-      : {}),
+    // GitHub Pages build: routes live under the repo subpath. Static HTML is
+    // rendered after the build by scripts/render-static.mjs.
+    ...(pagesBase ? { router: { basepath: pagesBase } } : {}),
   },
 });
