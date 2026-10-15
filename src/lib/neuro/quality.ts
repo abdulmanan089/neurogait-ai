@@ -42,8 +42,8 @@ export function insideFrame(lm: { x: number; y: number }[] | null, margin = 0.03
 export function motorGate(m: MotorMetrics | null): Gate {
   if (!m || m.source === "simulation") return { pass: !!m, issues: [] };
   const issues: string[] = [];
-  if (m.restCoverage < 0.7) issues.push(`Hand was tracked in only ${(m.restCoverage * 100).toFixed(0)}% of the rest phase (needs 70%).`);
-  if (m.tapCoverage < 0.7) issues.push(`Hand was tracked in only ${(m.tapCoverage * 100).toFixed(0)}% of the tapping phase (needs 70%).`);
+  if (m.restCoverage < 0.5) issues.push(`Hand was tracked in only ${(m.restCoverage * 100).toFixed(0)}% of the rest phase (needs 50%).`);
+  if (m.tapCoverage < 0.5) issues.push(`Hand was tracked in only ${(m.tapCoverage * 100).toFixed(0)}% of the tapping phase (needs 50%).`);
   if (m.tapCount < 4) issues.push(`Only ${m.tapCount} taps were detected (needs at least 4).`);
   return { pass: issues.length === 0, issues };
 }
@@ -60,7 +60,7 @@ export function voiceGate(v: VoiceMetrics | null): Gate {
 export function ocularGate(o: OcularMetrics | null): Gate {
   if (!o || o.source === "simulation") return { pass: !!o, issues: [] };
   const issues: string[] = [];
-  if (o.coverage < 0.7) issues.push(`Eyes were tracked in only ${(o.coverage * 100).toFixed(0)}% of frames (needs 70%).`);
+  if (o.coverage < 0.5) issues.push(`Eyes were tracked in only ${(o.coverage * 100).toFixed(0)}% of frames (needs 50%).`);
   if (o.saccadeCount < 3) issues.push(`Only ${o.saccadeCount} target jumps could be timed (needs 3).`);
   if (o.calibrationR2 < 0.3) issues.push("Gaze did not follow the target closely enough to calibrate. Keep your head still and move only your eyes.");
   return { pass: issues.length === 0, issues };

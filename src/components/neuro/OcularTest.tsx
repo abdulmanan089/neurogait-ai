@@ -358,7 +358,8 @@ export function OcularTest({
     lightingCheck(luma),
     { id: "eyes", label: "Eyes visible", ok: eyesSeen, hint: eyesSeen ? "Both irises tracked." : "Face the camera; remove glare-causing glasses; keep eyes open." },
   ];
-  const checksOk = checks.every((c) => c.ok);
+  // Only detection is required to start; lighting/framing are advisory so real rooms are not blocked.
+  const checksOk = checks.filter((c) => c.id === "hand" || c.id === "eyes").every((c) => c.ok);
   const gate = ocularGate(result);
   const latTone = result ? (result.saccadeLatencyMs > 300 ? "bad" : result.saccadeLatencyMs > 250 ? "warn" : "good") : "default";
 

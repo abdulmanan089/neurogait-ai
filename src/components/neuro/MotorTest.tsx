@@ -331,7 +331,8 @@ export function MotorTest({
     { id: "hand", label: "Hand detected", ok: handSeen, hint: handSeen ? "Hand landmarks found." : "Show your open hand to the camera." },
     { id: "frame", label: "Fully in frame", ok: handInFrame, hint: handInFrame ? "No fingers cut off or occluded." : "Move back so the whole hand, including fingertips, is visible." },
   ];
-  const checksOk = checks.every((c) => c.ok);
+  // Only detection is required to start; lighting/framing are advisory so real rooms are not blocked.
+  const checksOk = checks.filter((c) => c.id === "hand" || c.id === "eyes").every((c) => c.ok);
   const gate = motorGate(result);
 
   return (
@@ -408,7 +409,7 @@ export function MotorTest({
                 <Button onClick={beginRun} disabled={mode === "camera" && !checksOk}>
                   <Play className="mr-2 h-4 w-4" /> Start 24-second test
                 </Button>
-                {mode === "camera" && !checksOk && <span className="text-xs text-muted-foreground">Fix the quality checks below to begin.</span>}
+                {mode === "camera" && !checksOk && <span className="text-xs text-muted-foreground">Show your hand to the camera to begin.</span>}
                 {mode === "camera" && (
                   <Button variant="outline" onClick={startSimulation}>
                     <Sparkles className="mr-2 h-4 w-4" /> Use simulation instead
