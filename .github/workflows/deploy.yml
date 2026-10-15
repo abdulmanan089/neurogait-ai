@@ -31,12 +31,12 @@ jobs:
       - name: Build
         env:
           # Serve assets relative to the repo subpath (e.g. /gait-voice-ai/).
-          GITHUB_PAGES_BASE: /${{ github.event.repository.name }}/
+          GITHUB_PAGES_BASE: /${{ github.event.repository.name || 'neurogait-ai' }}/
         run: bun run build
 
       - name: Assemble static site
         env:
-          GITHUB_PAGES_BASE: /${{ github.event.repository.name }}/
+          GITHUB_PAGES_BASE: /${{ github.event.repository.name || 'neurogait-ai' }}/
         run: |
           rm -rf site && cp -r dist/client site
           rm -f site/_headers
