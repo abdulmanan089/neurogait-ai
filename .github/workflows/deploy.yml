@@ -34,13 +34,17 @@ jobs:
           GITHUB_PAGES_BASE: /${{ github.event.repository.name }}/
         run: bun run build
 
-      - name: Select static output
+      - name: Assemble static site
+        env:
+          GITHUB_PAGES_BASE: /${{ github.event.repository.name }}/
         run: |
-          if [ -d dist/client ]; then cp -r dist/client site;
-          elif [ -d .output/public ]; then cp -r .output/public site;
-          elif [ -d dist ]; then cp -r dist site;
-          else echo "No static build output found" && exit 1; fi
+          rm -rf site && cp -r dist/client site
+          rm -f site/_headers
+          bun scripts/render-static.mjs site
           touch site/.nojekyll
+          for f in index.html 404.html .nojekyll; do
+            test -f "site/$f" || { echo "missing site/$f"; exit 1; }
+          done
 
       - uses: actions/upload-pages-artifact@v3
         with:
